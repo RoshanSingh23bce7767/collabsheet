@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "presence": {
+      "$docId": {
+        ".read": "auth != null",
+        "$userId": {
+          ".write": "auth != null && auth.uid === $userId",
+          ".validate": "newData.hasChildren(['name', 'color', 'lastSeen'])"
+        }
+      }
+    }
+  }
+}

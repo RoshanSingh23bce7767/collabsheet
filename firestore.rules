@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    match /documents/{docId} {
+      // Anyone signed in can read/list documents (open collaboration model)
+      allow read: if isSignedIn();
+
+      // Only the creator sets ownerId on create; only owner can rename/delete
+      allow create: if isSignedIn() 
+                    && request.resource.data.ownerId == request.auth.uid;
+      
+      allow update, delete: if isSignedIn() 
+                            && resource.data.ownerId == request.auth.uid;
+
+      // Cells: any signed-in collaborator can read and write to cells
+      match /cells/{cellId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() 
+                     // Enforce audit integrity by checking that updatedBy matches the active user
+                     && request.resource.data.updatedBy == request.auth.uid;
+      }
+    }
+  }
+}
